@@ -8,27 +8,16 @@
 # Code for Paper: "KGML-xDTD: A Knowledge Graph-based Machine Learning Framework for Drug Treatment Prediction and Mechanism Description"
 
 ## Pre-Setting
+1. Please install [conda](https://conda.io/projects/conda/en/latest/user-guide/install/index.html)
 
-1. Please install [conda](https://conda.io/projects/conda/en/latest/user-guide/install/index.html) and install a tool [zenodo-get](https://zenodo.org/record/1261813/) using the command `pip install zenodo-get`
-
-2. Download relevant data and software from Zenodo using the command below:
+2. Please install the relevant conda environments by the following commands:
 ```Shell
-zenodo_get --doi=10.5281/zenodo.7582233
-```
-Note we provide the associated description of each dataset and software downloaded via this step on [Zenodo](https://zenodo.org/record/7582233). Some datasets are large, so the downloading process needs to take a while.
+## install mamba
+conda install -c conda-forge mamba
 
-3. Set up the local neo4j database by the following steps:
-```Shell
-## assume step 2 has been implemented
-tar zxvf neo4j-community-3.5.26.tar.gz
-rm neo4j-community-3.5.26.tar.gz
-```
-
-4. Please install the relevant conda environments by the following commands:
-```Shell
 ## construct two conda environements
-conda env create -f envs/graphsage_p2.7env.yml
-conda env create -f envs/main_env.yml
+mamba env create -f envs/graphsage_p2.7env.yml
+mamba env create -f envs/main_env.yml
 
 ## activiate the 'main_env' conda environment
 conda activate main_env
@@ -36,10 +25,24 @@ conda activate main_env
 ## install pytorch geometric (it might take some time, so you don't need to install it if you don't try to run the baseline models)
 TORCH_VERSION=1.10.2 ## check version by executing "python -c 'import torch; print(torch.__version__)'"
 CUDA_VERSION='cu113' ## check version by executing "python -c 'import torch; print(torch.version.cuda)'"
-pip install torch-scatter torch-sparse -f https://data.pyg.org/whl/torch-${TORCH_VERSION}+${CUDA_VERSION}.html
-pip install torch-geometric
+pip install torch-scatter==2.0.9 torch-sparse==0.6.12 -f https://data.pyg.org/whl/torch-${TORCH_VERSION}+${CUDA_VERSION}.html
+pip install torch-geometric==2.0.3
 ```
-5. Please install OpenKE PyTorch Version by the following commands:
+
+3. Download relevant data and software from Zenodo using the command below (you can skip this step if you only need to run the pretrained KGML-xDTD model but not train it from scratch):
+```Shell
+zenodo_get --doi=10.5281/zenodo.7582233
+```
+Note we provide the associated description of each dataset and software downloaded via this step on [Zenodo](https://zenodo.org/record/7582233). Some datasets are large, so the downloading process needs to take a while.
+
+4. Set up the local neo4j database by the following steps (you can skip this step if you only need to run the pretrained KGML-xDTD model but not train it from scratch):
+```Shell
+## assume step 2 has been implemented
+tar zxvf neo4j-community-3.5.26.tar.gz
+rm neo4j-community-3.5.26.tar.gz
+```
+
+5. Please install OpenKE PyTorch Version by the following commands (you can skip this step if you only need to run the pretrained KGML-xDTD model but not replicate the results in paper):
 ```Shell
 ## Clone the OpenKE-PyTorch branch
 git clone -b OpenKE-PyTorch https://github.com/thunlp/OpenKE --depth 1
@@ -51,11 +54,12 @@ bash make.sh
 cd ..
 ```
 
-6. Build the local Biomedical Medical Knowledge (BKG) by the following commands:
+6. Build the local Biomedical Medical Knowledge (BKG) by the following commands (you can skip this step if you only need to run the pretrained KGML-xDTD model but not train it from scratch):
 ```Shell
 ## decompress tar.gz file
 tar zxvf bkg_rtxkg2c_v2.7.3.tar.gz
 rm bkg_rtxkg2c_v2.7.3.tar.gz
+ln -s ../bkg_rtxkg2c_v2.7.3/relevant_dbs/node_synonymizer_v1.0_KG2.7.3.sqlite ./scripts/node_synonymizer_v1.0_KG2.7.3.sqlite
 
 ## set up neo4j info 
 export neo4j_username='neo4j'
@@ -79,36 +83,56 @@ ${neo4j_command} restart
 python ./bkg_rtxkg2c_v2.7.3/scripts/python_scripts/create_indexes_contrains.py
 ```
 
-7. Apply for DrugBank license and download `drugbank.xml` dataset
+7. Apply for DrugBank license and download `drugbank.xml` dataset (you can skip this step if you only need to run the pretrained KGML-xDTD model but not train it from scratch)
 
 Due to the drugbank license limitation, we cannot directly provide the `drugbank.xml` dataset that used in this research. Please first go to [drugbank](https://go.drugbank.com/releases/latest) website, and follow the instruction to access its non-commercial license and then download its dataset `drugbank.xml` containing all drug information.
 
 ---
 
-## Data Preprocessing
+## Data Preprocessing (skip it if you don't need to train the KGML-xDTD model from scratch)
 Pleaase follow the steps 1-4 within `1_data_preprocessing.sh` to do data pre-processing. These steps may need a few hours. Note that the step 3 needs user to get a drugbank academic license to download the `drugbank.xml` file and then put it into the './data' folder.
 
 ---
 
-## Model training
-Pleaase follow the steps 5-11 within `2_model_training.sh` to do model training. These steps may need a few days. These model training steps include the node-attribute embedding generation (step5) via [PubMedBert](https://arxiv.org/abs/2007.15779) model, [GraphSage](https://arxiv.org/abs/1706.02216) embedding generation (step6-7) via [its official source code](https://github.com/williamleif/GraphSAGE), Random Forest model training, and [Adversarial ActorCritic model](https://www.microsoft.com/en-us/research/uploads/prod/2020/05/sigir_RLRec_camera_ready.pdf) (combined with reward shaping strategy and "demonstration paths"). Note that running GraphSage with its official source code needs to switch to `graphsage_p2.7env` conda environment via command:
-```Shell
-conda activate graphsage_p2.7env
-```
+## Model training (skip it if you don't need to train the KGML-xDTD model from scratch)
+Pleaase follow the steps 5-11 within `2_model_training.sh` to do model training. These steps may need a few days. These model training steps include the node-attribute embedding generation (step5) via [PubMedBert](https://arxiv.org/abs/2007.15779) model, [GraphSage](https://arxiv.org/abs/1706.02216) embedding generation (step6-7) via [its official source code](https://github.com/williamleif/GraphSAGE), Random Forest model training, and [Adversarial ActorCritic model](https://www.microsoft.com/en-us/research/uploads/prod/2020/05/sigir_RLRec_camera_ready.pdf) (combined with reward shaping strategy and "demonstration paths"). Note that running GraphSage with its official source code needs to switch to `graphsage_p2.7env` conda environment via command `conda activate graphsage_p2.7env`.
 
 ---
 
 ## Model Inference
 Before doing model inference, plesae make sure the steps 1-6 described in 'Pre-Setting' have been executed and download the trained models from Zenodo via the following commands:
-```
+```Shell
+current_path=$(pwd)
 cd ./model_evaluation
 ## download trained model and relevant data
-zenodo_get --doi=10.5281/zenodo.7653456
+# download trained model
+curl --cookie zenodo-cookies.txt "https://zenodo.org/records/7888629/files/models.tar.gz?download=1" --output models.tar.gz
+# download relevant data
+curl --cookie zenodo-cookies.txt "https://zenodo.org/records/7888629/files/data.tar.gz?download=1" --output data.tar.gz
+# download graphsage_link model data (skip it if you don't need to replicate the results in paper)
+curl --cookie zenodo-cookies.txt "https://zenodo.org/records/7888629/files/graphsage_link.tar.gz?download=1" --output graphsage_link.tar.gz
 ## uncompress files
 tar zxvf models.tar.gz
 rm models.tar.gz
 tar zxvf data.tar.gz
 rm data.tar.gz
+if [ -e "graphsage_link.tar.gz" ]; then
+    tar zxvf graphsage_link.tar.gz
+    rm graphsage_link.tar.gz
+    mv graphsage_link ./data
+    cd ./data/graphsage_link/ProcessedDataset/processed/
+    tar zxvf graphsage_link_test_loaders.tar.gz
+    rm graphsage_link_test_loaders.tar.gz
+    cd ./random_loaders
+    for file in `ls *`; do
+        tar zxvf $file
+        rm $file
+    done
+else
+    echo "No 'graphsage_link.tar.gz' file detected. Skip it!"
+fi
+cd ${current_path}
+echo "Download completed!!"
 ```
 
 We provide an example below to show how to use KGML-xDTD model framework within `python` environment:
@@ -140,16 +164,16 @@ xdtd = KGML_xDTD(args, data_path, model_path)
 xdtd.predict_single_ddp(drug_name='Eptacog Alfa', disease_name='Hemophilia B')
 ## predict treatment probabilities for a list of drug-diseae pairs
 xdtd.predict_ddps(drug_disease_name_list=[('Eptacog Alfa','Hemophilia B'),('Factor VIIa','Hemophilia B'),('Thrombin','Hemophilia B')])
-## predict top N potential diseases that could be treated by a given drug
+## predict top 10 potential diseases that could be treated by a given drug
 xdtd.predict_top_N_diseases(drug_name='Eptacog Alfa', N=10)
-## predict top N potential drugs that could be used to treat a given disease
+## predict top 10 potential drugs that could be used to treat a given disease
 xdtd.predict_top_N_drugs(disease_name='Hemophilia B', N=10)
-## predict top M potential KG-based MOA paths for explaining the treatment relationship of a single drug-diseae pair
+## predict top 10 potential KG-based MOA paths for explaining the treatment relationship of a single drug-diseae pair
 xdtd.predict_top_M_moa_paths(drug_name='Eptacog Alfa', disease_name='Hemophilia B', M=10)
 ```
 
 ### Evaluation
-Please run the following command to replicate the model comparison reported in our paper (Table2 and Table3) based on the `test` dataset. You can choose to run a few particular models by specifying them via the parameter `models`. Note that the evaulation of some models (e.g. SVM) are time-consuming.
+Please run the following command to replicate the model comparison reported in our paper (Table2 and Table3) based on the `test` dataset. You can choose to run a few particular models by specifying them via the parameter `models`. Note that the evaulation of some models (e.g. graphsage_link, SVM) are time-consuming.
 ```Shell
 ## set working directory
 work_folder=$(pwd)

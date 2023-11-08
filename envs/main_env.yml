@@ -19,6 +19,8 @@ dependencies:
   - xmltodict
   - nltk
   - pattern
+  - httpx
+  - pygraphviz=1.10
   - pip:
     - beautifulsoup4
     - biopython
@@ -32,6 +34,7 @@ dependencies:
     - scikit-learn==1.0.2
     - scipy==1.8.0
     - seaborn
+    - zenodo-get
     - pyyaml==6.0
     - treelib==1.6.1
     - tensorboard==2.8.0
